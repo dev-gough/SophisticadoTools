@@ -11,5 +11,5 @@ load_dotenv()
 MAINNET_ENDPOINT=os.getenv('MAINNET_ENDPOINT')
 
 w3 = Web3(Web3.HTTPProvider(MAINNET_ENDPOINT))
-
-print(w3.isConnected())
+temp = w3.eth.getBlock('latest')
+print(w3.eth.getBlock('latest'))
