@@ -9,6 +9,6 @@ load_dotenv()
 
 MAINNET_ENDPOINT=os.getenv('MAINNET_ENDPOINT')
 
-w3 = Web3(Web3.HTTPProvider('http://192.168.0.12:8545'))
+w3 = Web3(Web3.HTTPProvider(MAINNET_ENDPOINT))
 
-print(MAINNET_ENDPOINT)
+print(w3.isConnected())
