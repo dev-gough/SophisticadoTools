@@ -268,7 +268,7 @@ class Client():
                                ):
         """Get ERC20 token transactions by contract address."""
         if contract_address is None and address is None:
-            raise EtherscanIoException('Param `contract_address` and `address` cannot be None at the same time.')
+            raise Exception('Param `contract_address` and `address` cannot be None at the same time.')
 
         self._params['module'] = 'account'
         self._params['action'] = 'tokentx'

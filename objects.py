@@ -9,6 +9,7 @@ class Token:
         self.total_supply = total_supply
         self.token_pair = token_pair
 
+        self.balanceHistory = [[0, 0]]
         self.balance = 0
         self.token_price = None
 
@@ -39,13 +40,13 @@ class Token:
     def setTotalSupply(self, total_supply):
         self.total_supply = total_supply
 
-    def buy(self, amount):
+    def buy(self, amount, txHash):
         self.balance += amount
-        print("New", self.symbol, "balance: ", str(self.balance), self.symbol)
+        self.balanceHistory.append([self.balance, txHash])
 
-    def sell(self, amount):
+    def sell(self, amount, txHash):
         self.balance -= amount
-        print("New", self.symbol, "balance: ", str(self.balance), self.symbol)
+        self.balanceHistory.append([self.balance, txHash])
 
 
 class Portfolio:
@@ -71,8 +72,14 @@ class Portfolio:
             if i.getContractAddress().lower() == contract_address.lower():
                 return i
 
-    def buy(self, contract_address, amount):
-        self.findTokenByCA(contract_address).buy(amount)
+    def buy(self, contract_address, amount, txHash, txFee=0):
+        token = self.findTokenByCA(contract_address)
+        token.buy(amount, txHash)
+        self.findTokenByCA('ETH').sell(txFee, txHash)
+        print("New", token.symbol, "balance: ", str(token.balance), token.symbol)
 
-    def sell(self, contract_address, amount):
-        self.findTokenByCA(contract_address).sell(amount)
+    def sell(self, contract_address, amount, txHash, txFee=0):
+        token = self.findTokenByCA(contract_address)
+        token.sell(amount, txHash)
+        self.findTokenByCA('ETH').sell(txFee, txHash)
+        print("New", token.symbol, "balance: ", str(token.balance), token.symbol)
