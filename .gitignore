@@ -3,6 +3,4 @@ venv
 .idea
 .env
 *.png
-
-
-
+.vscode
