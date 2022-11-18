@@ -4,7 +4,7 @@ from datetime import datetime
 from pprint import pprint
 
 #TODO: Get hourly data
-def run_query(pair_address:(str), date_gt) -> dict:
+def run_query(pair_address:str, date_gt) -> dict:
 	"""
 	Returns the response from the Uniswap V2 Subgraph.
 
@@ -151,6 +151,8 @@ def print_prices(prices:dict, precision:int = 2) -> None:
 		date = datetime.fromtimestamp(timestamp)
 		print(f'{date}: ${eth_price:.{precision}f}')
 
+def get_pair_address(token_address):
+	pass
 # Testing Code
 if __name__ == '__main__':
 	# Returns list of day token data.

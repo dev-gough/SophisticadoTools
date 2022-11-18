@@ -1,5 +1,7 @@
 {
     "python.terminal.activateEnvironment": true,
     "python.formatting.provider": "yapf",
-    "jupyter.debugJustMyCode": false
+    "jupyter.debugJustMyCode": false,
+    "python.linting.mypyPath": ".venv/Scripts/python.exe",
+    "python.analysis.extraPaths": [".venv"]
 }

@@ -1,85 +1,113 @@
 class Token:
+    def __init__(self, token_addr: str) -> None:
+        self.address = token_addr
+        self.daily_price = {}
+        
+        self._setup()
 
-    def __init__(self, name, contract_address, symbol, decimals=9, total_supply=None, token_pair='ETH'):
-
+        """
+        
+        want to automatically get and make attributes:
+        
         self.name = name
         self.contract_address = contract_address
         self.symbol = symbol
         self.decimals = decimals
         self.total_supply = total_supply
-        self.token_pair = token_pair
-
-        self.balanceHistory = [[0, 0]]
-        self.balance = 0
-        self.token_price = None
-
-    def getContractAddress(self):
-        return self.contract_address
-
-    def getSymbol(self):
-        return self.symbol
-
-    def getDecimals(self):
-        return self.decimals
-
-    def getTotalSupply(self):
-        return self.total_supply
-
-    def getBalance(self):
-        return self.balance
-
-    def setContractAddress(self, contract_address):
-        self.contract_address = contract_address
-
-    def setSymbol(self, symbol):
-        self.symbol = symbol
-
-    def setDecimals(self, decimals):
-        self.decimals = decimals
-
-    def setTotalSupply(self, total_supply):
-        self.total_supply = total_supply
-
-    def buy(self, amount, txHash):
-        self.balance += amount
-        self.balanceHistory.append([self.balance, txHash])
-
-    def sell(self, amount, txHash):
-        self.balance -= amount
-        self.balanceHistory.append([self.balance, txHash])
-
+        self.token_pairs = {}
+        
+        """
+    
+    def _setup(self):
+        # Get the name of the token.
+        pass
 
 class Portfolio:
-    def __init__(self, address, tokens=[]):
+    """
+    A tracker for token holdings and prices.
+
+    Parameters:
+        address (str): The hexadecimal address of the wallet.
+        tokens (list): The list of tokens held in the wallet.
+    """
+    def __init__(self, address:str, tokens:list[Token] = []) -> None:
         self.address = address
         self.tokens = tokens
 
-        self.addToken('Ethereum', 'ETH', 'ETH', decimals=None, total_supply=None, token_pair=None)  # eth is automatically added
+        # Will be used eventually for caching token prices.
+        self.cache = {}
 
-    def isInstantiated(self, contract_address):  # check to see if token has already been instantiated
-        for i in self.tokens:
-            if i.getContractAddress().lower() == contract_address.lower():
-                return True
-        return False
+        # Will be list of all tx hashes
+        self.transactions = {}
+        self._pull_transactions()
 
-    def addToken(self, name, contract_address, symbol, decimals=9, total_supply=None, token_pair='ETH'):
-        if not self.isInstantiated(contract_address):
-            t = Token(name, contract_address, symbol, decimals=decimals, total_supply=total_supply, token_pair=token_pair)
-            self.tokens.append(t)
+        # TODO: Add usdc & eth as default.
+        usdc = Token('usdc-addr')
+        self.add_token(usdc)
+   
+    def add_token(self, token):
+        self.tokens.append(token)
 
-    def findTokenByCA(self, contract_address):
-        for i in self.tokens:
-            if i.getContractAddress().lower() == contract_address.lower():
-                return i
+    def remove_dust(self):
+        pass
 
-    def buy(self, contract_address, amount, txHash, txFee=0):
-        token = self.findTokenByCA(contract_address)
-        token.buy(amount, txHash)
-        self.findTokenByCA('ETH').sell(txFee, txHash)
-        print("New", token.symbol, "balance: ", str(token.balance), token.symbol)
+    def buy():
+        pass
 
-    def sell(self, contract_address, amount, txHash, txFee=0):
-        token = self.findTokenByCA(contract_address)
-        token.sell(amount, txHash)
-        self.findTokenByCA('ETH').sell(txFee, txHash)
-        print("New", token.symbol, "balance: ", str(token.balance), token.symbol)
+    def sell():
+        pass
+
+    def daily_pl():
+        pass
+
+    def _pull_transactions(self):
+        pass
+
+class PaperPortfolio(Portfolio):
+    def __init__(self, balance: int = 1000) -> None:
+        super().__init__()
+        self.fake_balance = balance
+
+    def paper_buy():
+        pass
+
+    def paper_sell():
+        pass
+
+class Transaction():
+    def __init__(self, args:dict) -> None:
+        self._block_number          = args['block_number']
+        self._from                  = args['from']
+        self._gas                   = args['gas']
+        self._gas_used              = args['gas_used']
+        self._hash                  = args['hash']
+        self._input                 = args['input']
+        self._is_error              = args['is_error']
+        self._timestamp             = args['timestamp']
+        self._to                    = args['to']
+        self._value                 = args['value']
+
+class NormalTransaction(Transaction):
+    def __init__(self, args:dict) -> None:
+        super().__init__(args)
+        self.tx_type                = 'normal'
+        self._block_hash            = args['block_hash']
+        self._confirmations         = args['confirmations']
+        self._cumulative_gas_used   = args['cumulative_gas_used']
+        self._gas_price             = args['gas_price']
+        self._nonce                 = args['nonce']
+        self._transaction_index     = args['transaction_index']
+        self._tx_receipt_status     = args['tx_receipt_status']
+
+class InternalTransaction(Transaction):
+    def __init__(self, args:dict):
+        super().__init__(args)
+        self._contract_address  = args['contract_address']
+        self._error_code        = args['error_code']
+        self._trace_id          = args['trace_id']
+        self._type              = args['type']
+        
+# TODO find example of these transactions, and alter top level Transaction class accordingly
+class ContractTransaction():
+    def __init__(self, args:dict) -> None:
+        pass
