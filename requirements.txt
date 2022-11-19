@@ -1,0 +1,4 @@
+# SophisticadoTools Pip Requirements
+python-dotenv
+requests
+requests_cache
