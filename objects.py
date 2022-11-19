@@ -1,3 +1,5 @@
+import pprint
+
 class Token:
     def __init__(self, token_addr: str) -> None:
         self.address = token_addr
@@ -76,38 +78,59 @@ class PaperPortfolio(Portfolio):
 
 class Transaction():
     def __init__(self, args:dict) -> None:
-        self._block_number          = args['block_number']
-        self._from                  = args['from']
-        self._gas                   = args['gas']
-        self._gas_used              = args['gas_used']
-        self._hash                  = args['hash']
-        self._input                 = args['input']
-        self._is_error              = args['is_error']
-        self._timestamp             = args['timestamp']
-        self._to                    = args['to']
-        self._value                 = args['value']
+        """
+        Initializes a Transaction obj, expecting args to be the return
+        from an etherscan api get_transactins_by_address() or
+        get_token_transactions().
+        """
+        self.block_number          = args['block_number']
+        self.from_                 = args['from']
+        self.gas                   = args['gas']
+        self.gas_used              = args['gas_used']
+        self.hash                  = args['hash']
+        self.input                 = args['input']
+        self.is_error              = args['is_error']
+        self.timestamp             = args['timestamp']
+        self.to                    = args['to']
+        self.value                 = args['value']
+
+    def __repr__(self) -> str:
+        return f"Transaction({self.block_number},{self.from_},{self.gas},{self.gas_used},{self.hash},{self.input},{self.is_error},{self.timestamp},{self.to},{self.value}"
+    
+    def __str__(self) -> str:
+        return pprint.pformat(self.__dict__)
+        
+    def is_incoming(self, p:Portfolio) -> bool:
+        """Returns true if the transaction is going into the portfolio address"""
+        return self._to.lower() == p.address.lower() 
 
 class NormalTransaction(Transaction):
     def __init__(self, args:dict) -> None:
         super().__init__(args)
-        self.tx_type                = 'normal'
-        self._block_hash            = args['block_hash']
-        self._confirmations         = args['confirmations']
-        self._cumulative_gas_used   = args['cumulative_gas_used']
-        self._gas_price             = args['gas_price']
-        self._nonce                 = args['nonce']
-        self._transaction_index     = args['transaction_index']
-        self._tx_receipt_status     = args['tx_receipt_status']
+        self.block_hash            = args['block_hash']
+        self.confirmations         = args['confirmations']
+        self.cumulative_gas_used   = args['cumulative_gas_used']
+        self.gas_price             = args['gas_price']
+        self.nonce                 = args['nonce']
+        self.transaction_index     = args['transaction_index']
+        self.tx_receipt_status     = args['tx_receipt_status']
+
+        self.tx_type               = 'normal'
+
 
 class InternalTransaction(Transaction):
     def __init__(self, args:dict):
         super().__init__(args)
-        self._contract_address  = args['contract_address']
-        self._error_code        = args['error_code']
-        self._trace_id          = args['trace_id']
-        self._type              = args['type']
+        self.contract_address  = args['contract_address']
+        self.error_code        = args['error_code']
+        self.trace_id          = args['trace_id']
+        self.type              = args['type']
+
+        self.tx_type           = 'internal'
         
 # TODO find example of these transactions, and alter top level Transaction class accordingly
 class ContractTransaction():
     def __init__(self, args:dict) -> None:
-        pass
+        super().__init__(args)
+        
+        self.tx_type = 'contract'

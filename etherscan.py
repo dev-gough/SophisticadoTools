@@ -60,8 +60,8 @@ class Client():
     def __req(self):
         r = self.session.post(url=self._api_url, data=self._params).json()
 
-        if '0' == r['status']:
-            print('--- Etherscan.io Message ---', r['message'])
+        """ if '0' == r['status']:
+            print('--- Etherscan.io Message ---', r['message']) """
 
         return r['result']
 
