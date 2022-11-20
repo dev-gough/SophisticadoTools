@@ -3,6 +3,7 @@ Refactored version of getAccountBalances.py
 
 ~Devon Gough
 """
+
 import os
 import pprint
 import etherscan
@@ -20,7 +21,7 @@ pp = pprint.PrettyPrinter(indent=4)
 def get_normal_transactions(p: Portfolio) -> list[objects.NormalTransaction]:
     normal_tx = client.get_transactions_by_address(p.address)
     transactions = []
-    if transactions is None: return
+    if len(normal_tx) == 0: return
     for tx in normal_tx:
         tmp = objects.NormalTransaction(tx)
         transactions.append(tmp)
@@ -30,7 +31,7 @@ def get_normal_transactions(p: Portfolio) -> list[objects.NormalTransaction]:
 def get_internal_transactions(p: Portfolio) -> list[objects.InternalTransaction]:
     internal_tx = client.get_transactions_by_address(p.address, tx_type='internal')
     transactions = []
-    if transactions is None: return
+    if len(internal_tx) == 0: return
     for tx in internal_tx:
         tmp = objects.InternalTransaction(tx)
         transactions.append(tmp)
@@ -38,9 +39,9 @@ def get_internal_transactions(p: Portfolio) -> list[objects.InternalTransaction]
     return transactions
 
 def get_contract_transactions(p: Portfolio) -> list[objects.ContractTransaction]:
-    contract_tx = client.get_token_transactions(p.address)
+    contract_tx = client.get_token_transactions(address=p.address)
     transactions = []
-    if transactions == []: return
+    if len(contract_tx) == 0: return
     for tx in contract_tx:
         tmp = objects.ContractTransaction(tx)
         transactions.append(tmp)
@@ -63,6 +64,8 @@ def get_all_transactions(p: Portfolio) -> list[objects.Transaction]:
 if __name__ == '__main__':
     address = '0xD29f9244beB3bfA4C4Ff354D913a481163E207a6'
     p = Portfolio(address)
-    tx = get_all_transactions(p)
     
-    print(tx[110].__str__())
+    contract_tx = client.get_token_transactions(address=p.address)
+    pp.pprint(contract_tx)
+
+

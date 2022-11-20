@@ -89,7 +89,6 @@ class Transaction():
         self.gas_used              = args['gas_used']
         self.hash                  = args['hash']
         self.input                 = args['input']
-        self.is_error              = args['is_error']
         self.timestamp             = args['timestamp']
         self.to                    = args['to']
         self.value                 = args['value']
@@ -99,6 +98,9 @@ class Transaction():
     
     def __str__(self) -> str:
         return pprint.pformat(self.__dict__)
+    
+    def __lt__(self, other):
+        return self.block_number < other.block_number
         
     def is_incoming(self, p:Portfolio) -> bool:
         """Returns true if the transaction is going into the portfolio address"""
@@ -111,6 +113,8 @@ class NormalTransaction(Transaction):
         self.confirmations         = args['confirmations']
         self.cumulative_gas_used   = args['cumulative_gas_used']
         self.gas_price             = args['gas_price']
+        self.is_error              = args['is_error']
+
         self.nonce                 = args['nonce']
         self.transaction_index     = args['transaction_index']
         self.tx_receipt_status     = args['tx_receipt_status']
@@ -123,14 +127,24 @@ class InternalTransaction(Transaction):
         super().__init__(args)
         self.contract_address  = args['contract_address']
         self.error_code        = args['error_code']
+        self.is_error          = args['is_error']
         self.trace_id          = args['trace_id']
         self.type              = args['type']
 
         self.tx_type           = 'internal'
         
-# TODO find example of these transactions, and alter top level Transaction class accordingly
-class ContractTransaction():
+class ContractTransaction(Transaction):
     def __init__(self, args:dict) -> None:
         super().__init__(args)
-        
-        self.tx_type = 'contract'
+        self.block_hash             = args['block_hash']
+        self.confirmations          = args['confirmations']
+        self.contract_address       = args['contract_address']
+        self.cumulative_gas_used    = args['cumulative_gas_used']
+        self.gas_price              = args['gas_price']
+        self.nonce                  = args['nonce']
+        self.token_decimal          = args['token_decimal']
+        self.token_name             = args['token_name']
+        self.token_symbol           = args['token_symbol']
+        self.transaction_index      = args['transaction_index']
+
+        self.tx_type                = 'contract'

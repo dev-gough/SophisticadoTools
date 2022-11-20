@@ -1,3 +1,5 @@
-## Added packages
+# Sophisticado Tools
 
-`pip install python-dotenv`
+So far, doesn't do much, but soon will maybe do something.
+
+## Functions
