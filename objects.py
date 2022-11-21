@@ -93,12 +93,12 @@ class Transaction():
         self.to                    = args['to']
         self.value                 = args['value']
 
-    def __repr__(self) -> str:
-        return f"Transaction({self.block_number},{self.from_},{self.gas},{self.gas_used},{self.hash},{self.input},{self.is_error},{self.timestamp},{self.to},{self.value}"
-    
     def __str__(self) -> str:
         return pprint.pformat(self.__dict__)
-    
+
+    def __repr__(self) -> str:
+        return f"Transaction({self.block_number},{self.from_},{self.gas},{self.gas_used},{self.hash},{self.input},{self.timestamp},{self.to},{self.value}"
+       
     def __lt__(self, other):
         return self.block_number < other.block_number
         
@@ -148,3 +148,14 @@ class ContractTransaction(Transaction):
         self.transaction_index      = args['transaction_index']
 
         self.tx_type                = 'contract'
+
+class MultiTransaction(Transaction):
+    def __init__(self, args:dict, tx:list[Transaction]=[]) -> None:
+        super().__init__(args)
+
+        self.tx_type = 'multi'
+
+        self._set_sub_tx(tx)
+
+    def _set_sub_tx(self, tx:list[Transaction]=[]) -> None:
+        pass

@@ -6,6 +6,7 @@ import json
 from dotenv import load_dotenv
 from web3 import Web3
 import etherscan
+import pprint
 
 load_dotenv()
 
@@ -14,8 +15,9 @@ ES_API_KEY = os.getenv('ES_API_KEY')
 MAINNET_ENDPOINT = os.getenv('MAINNET_ENDPOINT')
 w3 = Web3(Web3.HTTPProvider(MAINNET_ENDPOINT))
 es = etherscan.Client(api_key=ES_API_KEY, cache_expire_after=5)
+pp = pprint.PrettyPrinter(indent=4)
 
-ADDRESS = ''  # address to scan
+ADDRESS = '0xD29f9244beB3bfA4C4Ff354D913a481163E207a6'  # address to scan
 p = Portfolio(ADDRESS)  # portfolio obj tracking token balances
 
 def main():
@@ -83,10 +85,11 @@ def main():
         else:
             print("IDK")
         txs.append(z)
+    pp.pprint(txs)
 
     # Try to interpret transactions
 
-    for tx in txs:
+    """ for tx in txs:
         if not tx[0]:  # no normal tx associated, smart contract call only AFAIK
             if tx[1]:  # only seen these associated with eth transfer from contract address
                 tx_type = tx[1]['type']
@@ -220,7 +223,7 @@ def main():
             else:
                 p.buy(contract_address, token_amount, txHash)
                 print('bought ' + str(token_amount), token_symbol + ' for ' + str(eth_sent*-1) + ' Eth')
-
+ """
     print("done")
 
 def appendAllTx(transactionHash, txList):
