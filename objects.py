@@ -77,37 +77,43 @@ class PaperPortfolio(Portfolio):
         pass
 
 class Transaction():
-    def __init__(self, args:dict) -> None:
+    def __init__(self, args:dict,c:bool=False) -> None:
         """
         Initializes a Transaction obj, expecting args to be the return
         from an etherscan api get_transactins_by_address() or
         get_token_transactions().
         """
-        self.block_number          = args['block_number']
-        self.from_                 = args['from']
-        self.gas                   = args['gas']
-        self.gas_used              = args['gas_used']
-        self.hash                  = args['hash']
-        self.input                 = args['input']
-        self.timestamp             = args['timestamp']
-        self.to                    = args['to']
-        self.value                 = args['value']
+        self.block_number           = args['block_number']
+        self.gas                    = args['gas']
+        self.gas_used               = args['gas_used']
+        self.hash                   = args['hash']
+        self.input                  = args['input']
+        self.timestamp              = args['timestamp']
+        self.to                     = args['to']
+        self.value                  = args['value']
+
+        if c:
+            self.from_              = args['from_']
+        else: self.from_            = args['from']
 
     def __str__(self) -> str:
         return pprint.pformat(self.__dict__)
 
     def __repr__(self) -> str:
         return f"Transaction({self.block_number},{self.from_},{self.gas},{self.gas_used},{self.hash},{self.input},{self.timestamp},{self.to},{self.value}"
-       
+    
     def __lt__(self, other):
         return self.block_number < other.block_number
+    
+    def __eq__(self, other):
+        return self.hash == other.hash
         
     def is_incoming(self, p:Portfolio) -> bool:
         """Returns true if the transaction is going into the portfolio address"""
         return self._to.lower() == p.address.lower() 
 
 class NormalTransaction(Transaction):
-    def __init__(self, args:dict) -> None:
+    def __init__(self, args:dict,c:bool=False) -> None:
         super().__init__(args)
         self.block_hash            = args['block_hash']
         self.confirmations         = args['confirmations']
@@ -123,7 +129,7 @@ class NormalTransaction(Transaction):
 
 
 class InternalTransaction(Transaction):
-    def __init__(self, args:dict):
+    def __init__(self, args:dict,c:bool=False):
         super().__init__(args)
         self.contract_address  = args['contract_address']
         self.error_code        = args['error_code']
@@ -134,7 +140,7 @@ class InternalTransaction(Transaction):
         self.tx_type           = 'internal'
         
 class ContractTransaction(Transaction):
-    def __init__(self, args:dict) -> None:
+    def __init__(self, args:dict,c:bool=False) -> None:
         super().__init__(args)
         self.block_hash             = args['block_hash']
         self.confirmations          = args['confirmations']
@@ -150,12 +156,21 @@ class ContractTransaction(Transaction):
         self.tx_type                = 'contract'
 
 class MultiTransaction(Transaction):
-    def __init__(self, args:dict, tx:list[Transaction]=[]) -> None:
-        super().__init__(args)
+    def __init__(self, args:dict, c:bool=False) -> None:
+        super().__init__(args,c)
+
+        self.normal_transaction = None
+        self.internal_transaction = None
+        self.contract_transaction = None
 
         self.tx_type = 'multi'
+    
+    def set_normal_transaction(self,n:NormalTransaction) -> None:
+        self.normal_transaction = n
+    
+    def set_internal_transaction(self, i:InternalTransaction) -> None:
+        self.internal_transaction = i
+    
+    def set_contract_transaction(self, c:ContractTransaction) -> None:
+        self.contract_transaction = c
 
-        self._set_sub_tx(tx)
-
-    def _set_sub_tx(self, tx:list[Transaction]=[]) -> None:
-        pass

@@ -10,6 +10,7 @@ import etherscan
 import objects
 from objects import Portfolio
 from dotenv import load_dotenv
+from itertools import zip_longest
 
 load_dotenv()
 
@@ -26,7 +27,44 @@ def objectify(transactions:dict, tx_type:objects.Transaction, multi_tx: list[obj
         tx_objs.append(t)
     
     return tx_objs
-    
+
+def handle_multi_tx(transactions:list[objects.Transaction]) -> list[objects.Transaction]:
+    """
+    Checks for multiple transaction types with the same hash, molds them together
+    into one object (with pointers to the other Transaction objects), removes the
+    Transaction objects that share the same hash from transactions, then add the
+    one MultiTransaction in its place according to block_number.
+    """
+    cache = []
+    output_transactions = []
+    zipper = transactions[1:]
+    # Needs one pass through the list
+    for tx ,lookahead in zip_longest(transactions,zipper):
+        if cache and cache == tx:
+            # Create the temp MultiTransaction obj so we can point the right tx to it later.
+            tmp = objects.MultiTransaction(tx.__dict__,True)
+            # check ahead one element
+            try:
+                if lookahead is not None and lookahead == cache:
+                    # all 3 types are present.
+                    txs = [tx,cache,lookahead]
+                else:
+                    txs = [tx,cache]
+            except Exception as err:
+                print(err)
+            
+            for t in txs:
+                if t.tx_type    == 'normal': tmp.set_normal_transaction(t)
+                elif t.tx_type  == 'internal': tmp.set_internal_transaction(t)
+                elif t.tx_type  == 'contract': tmp.set_contract_transaction(t)
+
+            output_transactions.append(tmp)
+        if lookahead is not None and lookahead != tx:
+            output_transactions.append(tx)
+        cache = tx
+    output_transactions.sort()
+    return output_transactions
+
 def get_normal_transactions(p: Portfolio) -> list[objects.NormalTransaction]:
     normal_tx = client.get_transactions_by_address(p.address)
     return objectify(normal_tx,objects.NormalTransaction) if len(normal_tx) != 0 else None
@@ -52,6 +90,7 @@ def get_all_transactions(p: Portfolio, sorted:bool = True) -> list[objects.Trans
 
     if sorted:
         normal_tx.sort()
+        normal_tx = handle_multi_tx(normal_tx)
         
     return normal_tx
 
@@ -65,4 +104,3 @@ if __name__ == '__main__':
 
     for t in tx:
         print(t)
-
