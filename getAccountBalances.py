@@ -20,15 +20,17 @@ pp = pprint.PrettyPrinter(indent=4)
 ADDRESS = '0xD29f9244beB3bfA4C4Ff354D913a481163E207a6'  # address to scan
 p = Portfolio(ADDRESS)  # portfolio obj tracking token balances
 
+
 def main():
     normal_txs = es.get_transactions_by_address(address=p.address)
-    internal_txs = es.get_transactions_by_address(address=p.address, tx_type='internal')
+    internal_txs = es.get_transactions_by_address(address=p.address,
+                                                  tx_type='internal')
     contract_txs = es.get_token_transactions(address=p.address)
     txs = []
 
     # reformat transaction data to make it easily usable
 
-    while(len(normal_txs)+len(internal_txs)+len(contract_txs)>0):
+    while (len(normal_txs) + len(internal_txs) + len(contract_txs) > 0):
         # check block of tx so tx logs are merged in order
 
         z = []  # list to store aggregated transaction data
@@ -85,11 +87,10 @@ def main():
         else:
             print("IDK")
         txs.append(z)
-    pp.pprint(txs)
 
     # Try to interpret transactions
 
-    """ for tx in txs:
+    for tx in txs:
         if not tx[0]:  # no normal tx associated, smart contract call only AFAIK
             if tx[1]:  # only seen these associated with eth transfer from contract address
                 tx_type = tx[1]['type']
@@ -102,7 +103,8 @@ def main():
 
                 if tx[1]['to'].lower() == p.address.lower():
                     p.buy('ETH', amount, txHash)
-                    print("\t received", str(amount), 'ETH', 'from', tx[1]['from'])
+                    print("\t received", str(amount), 'ETH', 'from',
+                          tx[1]['from'])
                 elif tx[1]['from'].lower() == p.address.lower():
                     p.sell('ETH', amount, txHash)
                     print("\t sent", str(amount), 'ETH', 'to', tx[1]['to'])
@@ -110,12 +112,14 @@ def main():
                     print('\ttokens not sent to or from address being scanned')
                     print('\t', i)
 
-        elif not tx[1] and not tx[2]:  # no internal smart contract txs, and not an erc20 tx, can also be an approve tx (how to handle??)
+        elif not tx[1] and not tx[
+                2]:  # no internal smart contract txs, and not an erc20 tx, can also be an approve tx (how to handle??)
             if tx[0]['is_error']:
                 amount = 0
             else:
                 amount = Web3.fromWei(tx[0]['value'], 'ether').real
-            txFee = Web3.fromWei(tx[0]['gas_price']*tx[0]['gas_used'], 'ether').real
+            txFee = Web3.fromWei(tx[0]['gas_price'] * tx[0]['gas_used'],
+                                 'ether').real
             txHash = tx[0]['hash']
 
             if tx[0]['to'].lower() == p.address.lower():
@@ -125,10 +129,14 @@ def main():
                 p.sell('ETH', amount, txHash, txFee=txFee)
                 print('sent ' + str(amount) + ' Eth')
 
-        elif not tx[1]:  # not an internal smart contract tx, so far i've only seen this happen for buying shitcoins or contract calls
-            if isinstance(tx[2], list):  # if there are multiple erc20 txs, its likely not a shitcoin purchase
+        elif not tx[
+                1]:  # not an internal smart contract tx, so far i've only seen this happen for buying shitcoins or contract calls
+            if isinstance(
+                    tx[2], list
+            ):  # if there are multiple erc20 txs, its likely not a shitcoin purchase
                 print("some kind of smart contract call going on:")
-                txFee = Web3.fromWei(tx[0]['gas_price'] * tx[0]['gas_used'], 'ether').real
+                txFee = Web3.fromWei(tx[0]['gas_price'] * tx[0]['gas_used'],
+                                     'ether').real
                 p.sell('ETH', 0, tx[0]['hash'], txFee=txFee)
                 for i in tx[2]:
                     token_name = i['token_name']
@@ -138,23 +146,31 @@ def main():
                         amount = 0
                     else:
                         amount = i['value'] / pow(10, i['token_decimal'])
-                    p.addToken(token_name, contract_address, token_symbol, decimals=i['token_decimal'])
+                    p.addToken(token_name,
+                               contract_address,
+                               token_symbol,
+                               decimals=i['token_decimal'])
                     txHash = i['hash']
 
                     if i['to'].lower() == p.address.lower():
                         p.buy(contract_address, amount, txHash)
-                        print("\t received", str(amount), token_symbol, 'from', i['from'])
+                        print("\t received", str(amount), token_symbol, 'from',
+                              i['from'])
                     elif i['from'].lower() == p.address.lower():
                         p.sell(contract_address, amount, txHash)
-                        print("\t sent", str(amount), token_symbol, 'to', i['to'])
+                        print("\t sent", str(amount), token_symbol, 'to',
+                              i['to'])
                     else:
-                        print('\ttokens not sent to or from address being scanned')
+                        print(
+                            '\ttokens not sent to or from address being scanned'
+                        )
                         print('\t', i)
 
             elif isinstance(tx[2], dict):
                 eth_spent = Web3.fromWei(tx[0]['value'], 'ether').real
                 txHash = tx[0]['hash']
-                txFee = Web3.fromWei(tx[0]['gas_price'] * tx[0]['gas_used'], 'ether').real
+                txFee = Web3.fromWei(tx[0]['gas_price'] * tx[0]['gas_used'],
+                                     'ether').real
                 token_name = tx[2]['token_name']
                 token_symbol = tx[2]['token_symbol']
                 contract_address = tx[2]['contract_address']
@@ -162,25 +178,34 @@ def main():
                 p.sell('ETH', eth_spent, txHash, txFee=txFee)
 
                 if tx[2]['to'].lower() != p.address.lower():
-                    token_sent = tx[2]['value'] / pow(10, tx[2]['token_decimal'])
+                    token_sent = tx[2]['value'] / pow(10,
+                                                      tx[2]['token_decimal'])
                     p.sell(contract_address, token_sent, txHash)
-                    print('spent ' + str(eth_spent) + ' Eth, also sent ' + str(token_sent), token_symbol)
+                    print(
+                        'spent ' + str(eth_spent) + ' Eth, also sent ' +
+                        str(token_sent), token_symbol)
                 else:
-                    token_received = tx[2]['value'] / pow(10, tx[2]['token_decimal'])
-                    p.addToken(token_name, contract_address, token_symbol, decimals=tx[2]['token_decimal'])
+                    token_received = tx[2]['value'] / pow(
+                        10, tx[2]['token_decimal'])
+                    p.addToken(token_name,
+                               contract_address,
+                               token_symbol,
+                               decimals=tx[2]['token_decimal'])
                     p.buy(contract_address, token_received, txHash)
-                    print('spent ' + str(eth_spent) + ' Eth for ' + str(token_received), token_symbol)
+                    print(
+                        'spent ' + str(eth_spent) + ' Eth for ' +
+                        str(token_received), token_symbol)
             else:
                 raise Exception('erc20 tx list is some kinda fucked')
-
 
         elif not tx[2]:  # idk what this means
             print('internal transaction stuff')
             txHash = tx[0]['hash']
-            txFee = Web3.fromWei(tx[0]['gas_price'] * tx[0]['gas_used'], 'ether').real
+            txFee = Web3.fromWei(tx[0]['gas_price'] * tx[0]['gas_used'],
+                                 'ether').real
 
             if tx[0]['is_error']:
-                eth_sent=0
+                eth_sent = 0
             else:
                 eth_sent = Web3.fromWei(tx[0]['value'], 'ether').real
             if tx[1]['is_error']:
@@ -188,18 +213,20 @@ def main():
             else:
                 eth_received = Web3.fromWei(tx[1]['value'], 'ether').real
 
-            if eth_sent>=eth_received:
-                p.sell('ETH',eth_sent-eth_received, txHash, txFee=txFee)
+            if eth_sent >= eth_received:
+                p.sell('ETH', eth_sent - eth_received, txHash, txFee=txFee)
             else:
-                p.buy('ETH', eth_received-eth_sent, txHash, txFee=txFee)
+                p.buy('ETH', eth_received - eth_sent, txHash, txFee=txFee)
 
         else:  # internal tx, and erc20 tx.
             eth_sent = 0
-            if tx[0]['to'].lower() != p.address.lower():  # if the tx sends eth to another wallet
+            if tx[0]['to'].lower() != p.address.lower(
+            ):  # if the tx sends eth to another wallet
                 eth_sent += Web3.fromWei(tx[0]['value'], 'ether').real
             else:  # if the tx receives eth
                 eth_sent -= Web3.fromWei(tx[0]['value'], 'ether').real
-            if tx[1]['to'].lower() != p.address.lower():  # if the internal tx sends eth to another wallet
+            if tx[1]['to'].lower() != p.address.lower(
+            ):  # if the internal tx sends eth to another wallet
                 eth_sent += Web3.fromWei(tx[1]['value'], 'ether').real
             else:  # if the internal tx receives eth
                 eth_sent -= Web3.fromWei(tx[1]['value'], 'ether').real
@@ -209,30 +236,37 @@ def main():
             contract_address = tx[2]['contract_address']
             token_amount = tx[2]['value'] / pow(10, tx[2]['token_decimal'])
             txHash = tx[0]['hash']
-            txFee = Web3.fromWei(tx[0]['gas_price'] * tx[0]['gas_used'], 'ether').real
+            txFee = Web3.fromWei(tx[0]['gas_price'] * tx[0]['gas_used'],
+                                 'ether').real
 
             if eth_sent >= 0:
                 p.sell('ETH', eth_sent, txHash, txFee=txFee)
             else:
-                p.buy('ETH', eth_sent*-1, txHash, txFee=txFee)
+                p.buy('ETH', eth_sent * -1, txHash, txFee=txFee)
 
-            p.addToken(token_name, contract_address, token_symbol, decimals=tx[2]['token_decimal'])
+            p.addToken(token_name,
+                       contract_address,
+                       token_symbol,
+                       decimals=tx[2]['token_decimal'])
             if tx[2]['to'].lower() != p.address.lower():
                 p.sell(contract_address, token_amount, txHash)
-                print('sold ' + str(token_amount), token_symbol + ' for ' + str(eth_sent) + ' Eth')
+                print('sold ' + str(token_amount),
+                      token_symbol + ' for ' + str(eth_sent) + ' Eth')
             else:
                 p.buy(contract_address, token_amount, txHash)
-                print('bought ' + str(token_amount), token_symbol + ' for ' + str(eth_sent*-1) + ' Eth')
- """
+                print('bought ' + str(token_amount),
+                      token_symbol + ' for ' + str(eth_sent * -1) + ' Eth')
+
     print("done")
+
 
 def appendAllTx(transactionHash, txList):
     y = []
-    i =0
+    i = 0
     while (transactionHash == txList[0]['hash']):
         y.append(txList[0])
         txList.pop(0)
-        i+=1
+        i += 1
         if not txList:
             break
     if len(y) == 1:
@@ -243,5 +277,3 @@ def appendAllTx(transactionHash, txList):
 
 if __name__ == "__main__":
     main()
-
-

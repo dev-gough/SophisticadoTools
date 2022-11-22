@@ -11,6 +11,7 @@ import objects
 from objects import Portfolio
 from dotenv import load_dotenv
 from itertools import zip_longest
+from web3 import Web3
 
 load_dotenv()
 
@@ -158,7 +159,46 @@ def get_all_transactions(p: Portfolio,
 
     return normal_tx
 
+def process_transaction(p: Portfolio, t: objects.Transaction) -> None:
+    """Process a single transaction and execute it's state change for the Portfolio
+    TODO
+    """
+    # There are 6 different combinations of tx in a single tx object.
 
+    if (t.tx_type == "multi"):
+        # handle the 3 cases here
+        pass
+    else:
+        # handle the other 3 cases here
+        if (t.tx_type == 'normal'):
+            # sending eth from 1 addr to another
+
+            """
+            if tx[0]['to'].lower() == p.address.lower():
+                p.buy('ETH', amount, txHash)
+                print('received ' + str(amount) + ' Eth')
+            elif tx[0]['from'].lower() == p.address.lower():
+                p.sell('ETH', amount, txHash, txFee=txFee)
+                print('sent ' + str(amount) + ' Eth')
+            """
+            if tx.is_error:
+                amt = 0
+            else:
+                amt = Web3.fromWei(tx.value, 'ether')
+                tx_fee =Web3.fromWei(tx.gas_price * tx.gas_used, 'ether')
+            
+            if tx.is_incoming(p):
+                pass
+                # logic for adding it to Portfolio
+            else:
+                pass
+                # logic for removing it from Portfolio
+
+        elif (t.tx_type == 'internal'):
+            pass
+        else:
+            pass
+    pass
 # Testing
 if __name__ == '__main__':
     address = '0xD29f9244beB3bfA4C4Ff354D913a481163E207a6'
@@ -166,5 +206,4 @@ if __name__ == '__main__':
 
     tx = get_all_transactions(p)
 
-    for t in tx:
-        print(t)
+    

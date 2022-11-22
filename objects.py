@@ -10,11 +10,9 @@ class Token:
         TODO
         """
         self.address = token_addr
-        self.daily_price = {}
 
         self._setup()
         """
-        
         want to automatically get and make attributes:
         
         self.name = name
@@ -23,7 +21,6 @@ class Token:
         self.decimals = decimals
         self.total_supply = total_supply
         self.token_pairs = {}
-        
         """
 
     def _setup(self):
@@ -37,43 +34,16 @@ class Portfolio:
 
     Parameters:
         address (str): The hexadecimal address of the wallet.
-        tokens (list): The list of tokens held in the wallet.
     """
 
-    def __init__(self, address: str, tokens: list[Token] = []) -> None:
-        """
-        TODO
-        """
+    def __init__(self, address: str) -> None:
         self.address = address
-        self.tokens = tokens
-
-        # Will be used eventually for caching token prices.
-        self.cache = {}
-
-        # Will be list of all tx hashes
-        self.transactions = {}
-        self._pull_transactions()
-
-        # TODO: Add usdc & eth as default.
-        usdc = Token("usdc-addr")
-        self.add_token(usdc)
-
-    def add_token(self, token):
-        self.tokens.append(token)
-
-    def remove_dust(self):
-        pass
-
-    def buy():
-        pass
-
-    def sell():
-        pass
-
-    def daily_pl():
-        pass
+        self._all_transactions = self._pull_transactions()
+        self.tokens = []
 
     def _pull_transactions(self):
+        """This will call temp.py or whatever its called
+        in the future when its done"""
         pass
 
 
@@ -92,8 +62,6 @@ class PaperPortfolio(Portfolio):
 
 class Transaction:
     """The parent class to all types of Transactions
-
-    Will eventually be an abstract class, hopefully.
 
     Args should be provided in a single dictionary.  Ideally args should be returned from
     the etherscan client api request.

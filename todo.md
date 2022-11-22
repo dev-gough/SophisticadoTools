@@ -5,5 +5,4 @@
 
 ## 1.1 Refactor Todo
 
-1. Make Transaction a abstract class
-2. Finish Refactor
+1. Finish Refactor
