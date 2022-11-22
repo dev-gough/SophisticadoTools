@@ -3,3 +3,4 @@ python-dotenv
 requests
 requests_cache
 web3
+yapf
