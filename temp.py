@@ -163,37 +163,48 @@ def process_transaction(p: Portfolio, t: objects.Transaction) -> None:
     """Process a single transaction and execute it's state change for the Portfolio
     TODO
     """
-    # There are 6 different combinations of tx in a single tx object.
+    # there are 6 different combinations of tx in a single tx object.
 
-    if (t.tx_type == "multi"):
+    if t.tx_type == "multi":
         # handle the 3 cases here
         pass
     else:
         # handle the other 3 cases here
-        if (t.tx_type == 'normal'):
+        if t.tx_type == 'normal':
             # sending eth from 1 addr to another
             if t.is_error:
                 amt = 0
+                tx_fee = 0
             else:
                 amt = Web3.fromWei(t.value, 'ether')
                 tx_fee = Web3.fromWei((t.gas_price * t.gas_used), 'ether')
             
             if t.is_incoming(p):
-                # logic for adding it to Portfolio
+                p.increment_balance('ether', amt)
+            else:
+                p.increment_balance('ether', amt+tx_fee, increase=False)
+
+        elif t.tx_type == 'internal':
+            """Seems to be transferring eth via a contract"""
+            if t.is_error:
+                amt = 0
+            else:
+                amt = Web3.fromWei(t.value, 'ether')
+            
+            if t.is_incoming(p):
                 p.increment_balance('ether',amt)
             else:
-                # logic for removing it from Portfolio
-                p.increment_balance('ether',amt+tx_fee,increase=False)
+                p.increment_balance('ether', amt+tx_fee, increase=False)
 
-        elif (t.tx_type == 'internal'):
-            pass
-        else:
-            pass
-    pass
+        elif t.tx_type == 'contract':
+            print('check this out.')
+
 # Testing
 if __name__ == '__main__':
     address = '0xD29f9244beB3bfA4C4Ff354D913a481163E207a6'
     p = Portfolio(address)
 
     tx = get_all_transactions(p)
-    process_transaction(p,tx[0])   
+    
+    for t in tx:
+        process_transaction(p,t)

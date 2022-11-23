@@ -5,4 +5,5 @@
 
 ## 1.1 Refactor Todo
 
-1. Finish Refactor
+1. Standardize brackets
+2. Finish Refactor
