@@ -1,33 +1,22 @@
 import pprint
 
+# TODO: Solve the circular references
 class Token:
     """
     TODO
     """
 
-    def __init__(self, token_addr: str) -> None:
-        """
-        TODO
-        """
-        self.address = token_addr
+    def __init__(self, args:dict) -> None:
+        self.contract_address = args['contract_address']
+        self.decimals = args['decimals']
+        self.name = args['name']
+        self.symbol = args['symbol']
 
-        self._setup()
-        """
-        want to automatically get and make attributes:
+        # portfolio stuff
+        self.token_amount = 0
+        self.portfolio = args['portfolio']
+        self.token_transaction_history = []
         
-        self.name = name
-        self.contract_address = contract_address
-        self.symbol = symbol
-        self.decimals = decimals
-        self.total_supply = total_supply
-        self.token_pairs = {}
-        """
-
-    def _setup(self):
-        """TODO"""
-        # Get the name of the token.
-        pass
-
 
 class Portfolio:
     """A tracker for token holdings and prices
@@ -38,14 +27,55 @@ class Portfolio:
 
     def __init__(self, address: str) -> None:
         self.address = address
-        self._all_transactions = self._pull_transactions()
         self.tokens = []
+
+        self._all_transactions = self._pull_transactions()
+
+        # add eth
+        self.add_token({"portfolio":self,"name": "Ether","pair": None,"contract_address": None, "decimals": 18, "symbol": "ETH"})
 
     def _pull_transactions(self):
         """This will call temp.py or whatever its called
         in the future when its done"""
         pass
 
+    def add_token(self, token_args:dict) -> None:
+        """Create and add a token object"""
+        
+        """
+        Args needed for Token:
+        ca
+        
+        name
+        symbol
+        decimals
+        uni_v2_pair
+        """
+        temp = Token(token_args)
+        self.tokens.append(temp)
+
+    def increment_balance(self, token, amt, increase:bool=True):
+        """For when tokens get sent into an address"""
+
+        # find the token in the list within the portfolio
+
+        # should be a one element list, 
+        singular_token = [x for x in self.tokens if x.name.lower() == token.lower()]
+        
+        # TODO test this in a testing class eventually
+        if singular_token:
+            if len(singular_token) > 1:
+                print('bad')
+
+            t = singular_token[0]
+            
+            if increase:
+                t.token_amount += amt
+            else:
+                t.token_amount -= amt
+        else:
+            print(f'token: {token} is not recognized')
+    
 
 class PaperPortfolio(Portfolio):
 
@@ -122,7 +152,7 @@ class Transaction:
 
     def is_incoming(self, p: Portfolio) -> bool:
         """Returns true if the transaction is going into the portfolio address"""
-        return self._to.lower() == p.address.lower()
+        return self.to.lower() == p.address.lower()
 
 
 class NormalTransaction(Transaction):

@@ -172,27 +172,18 @@ def process_transaction(p: Portfolio, t: objects.Transaction) -> None:
         # handle the other 3 cases here
         if (t.tx_type == 'normal'):
             # sending eth from 1 addr to another
-
-            """
-            if tx[0]['to'].lower() == p.address.lower():
-                p.buy('ETH', amount, txHash)
-                print('received ' + str(amount) + ' Eth')
-            elif tx[0]['from'].lower() == p.address.lower():
-                p.sell('ETH', amount, txHash, txFee=txFee)
-                print('sent ' + str(amount) + ' Eth')
-            """
-            if tx.is_error:
+            if t.is_error:
                 amt = 0
             else:
-                amt = Web3.fromWei(tx.value, 'ether')
-                tx_fee =Web3.fromWei(tx.gas_price * tx.gas_used, 'ether')
+                amt = Web3.fromWei(t.value, 'ether')
+                tx_fee = Web3.fromWei((t.gas_price * t.gas_used), 'ether')
             
-            if tx.is_incoming(p):
-                pass
+            if t.is_incoming(p):
                 # logic for adding it to Portfolio
+                p.increment_balance('ether',amt)
             else:
-                pass
                 # logic for removing it from Portfolio
+                p.increment_balance('ether',amt+tx_fee,increase=False)
 
         elif (t.tx_type == 'internal'):
             pass
@@ -205,5 +196,4 @@ if __name__ == '__main__':
     p = Portfolio(address)
 
     tx = get_all_transactions(p)
-
-    
+    process_transaction(p,tx[0])   

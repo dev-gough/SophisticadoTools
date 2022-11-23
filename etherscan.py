@@ -140,6 +140,14 @@ class Client():
 
         return balances
 
+    def get_erc20_total_supply(self, address: str):
+        """Get ERC-20 Token Total Supply"""
+        self._params['module'] = 'stats'
+        self._params['action'] = 'tokensupply'
+        self._params['contractaddress'] = address
+
+        return int(self.__req())
+
     def __normalTransaction(self, source: dict):
         """Repack the __transaction dict"""
         return {
