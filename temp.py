@@ -20,6 +20,17 @@ ES_API_KEY = os.getenv('ES_API_KEY')
 client = etherscan.Client(api_key=ES_API_KEY, cache_expire_after=5)
 pp = pprint.PrettyPrinter(indent=4)
 
+def get_token_args(tx) -> dict:
+    token_args = {}
+
+    token_args.update({'name':tx.contract_transaction.token_name})
+    token_args.update({'symbol':tx.contract_transaction.token_symbol})
+    token_args.update({'contract_address':tx.contract_transaction.contract_address})
+    token_args.update({'decimals':tx.contract_transaction.token_decimal})
+    token_args.update({'pair':t.contract_transaction.from_})
+
+    return token_args
+
 
 def objectify(transactions: list,
               tx_type: objects.Transaction) -> list[objects.Transaction]:
@@ -38,6 +49,7 @@ def objectify(transactions: list,
         tx_objs.append(t)
 
     return tx_objs
+
 
 def handle_multi_tx(
         transactions: list[objects.Transaction]) -> list[objects.Transaction]:
@@ -64,18 +76,19 @@ def handle_multi_tx(
     zipper2 = transactions[2:]
 
     # needs one pass through the list, zip_longest is to have lookahead as well to try to find a third transaction.
-    for tx, lookahead1, lookahead2 in zip_longest(transactions, zipper1, zipper2):
-        if tx == lookahead1:  # == implemented by hash
+    for tx, lookahead1, lookahead2 in zip_longest(transactions, zipper1,
+                                                  zipper2):
+        if lookahead1 is not None and tx == lookahead1:  # == implemented by hash
 
             # create the temp MultiTransaction obj so we can point the right tx to it later.
             tmp = objects.MultiTransaction(tx.__dict__, True)
 
             # check ahead one element
-            if lookahead1 == lookahead2:
-                txs = [tx,lookahead1,lookahead2]
+            if lookahead2 is not None and lookahead1 == lookahead2:
+                txs = [tx, lookahead1, lookahead2]
             else:
-                txs = [tx,lookahead1]
-            
+                txs = [tx, lookahead1]
+
             # iterate through all transactions found with the same hash, then set the pointers.
             for t in txs:
                 if t.tx_type == 'normal':
@@ -149,6 +162,7 @@ def get_all_transactions(p: Portfolio,
 
     return normal_tx
 
+
 def process_transaction(p: Portfolio, t: objects.Transaction) -> None:
     """Process a single transaction and execute it's state change for the Portfolio
     TODO
@@ -157,7 +171,27 @@ def process_transaction(p: Portfolio, t: objects.Transaction) -> None:
 
     if t.tx_type == "multi":
         # handle the 3 cases here
-        pass
+        if t.contract_transaction and t.normal_transaction:
+            """BUYING/SELLING ON UNISWAP?"""
+
+            # contract tx deals with erc20 tokens in/out
+
+            token_amt = t.contract_transaction.value / (10**t.contract_transaction.token_decimal)
+            eth_value = Web3.fromWei(t.value,'ether')
+            ca = t.contract_transaction.contract_address
+
+            if not p.holds_token(ca):
+                p.add_token(get_token_args(t))
+
+            token = p.get_token_from_contract_address(ca)
+            eth = p.get_token_from_contract_address('ether')
+            
+            if t.is_incoming(p):
+                token.token_amount += token_amt
+                eth.token_amount -= eth_value
+            else:
+                token.token_amount -= token_amt
+                eth.token_amount += eth_value
     else:
         # handle the other 3 cases here
         if t.tx_type == 'normal':
@@ -168,11 +202,13 @@ def process_transaction(p: Portfolio, t: objects.Transaction) -> None:
             else:
                 amt = Web3.fromWei(t.value, 'ether')
                 tx_fee = Web3.fromWei((t.gas_price * t.gas_used), 'ether')
-            
+
+            eth = p.get_token_from_contract_address('ether')
+
             if t.is_incoming(p):
-                p.increment_balance('ether', amt)
+                eth.token_amount += amt
             else:
-                p.increment_balance('ether', amt+tx_fee, increase=False)
+                eth.token_amount -= (amt + tx_fee)
 
         elif t.tx_type == 'internal':
             """Seems to be transferring eth via a contract"""
@@ -181,13 +217,16 @@ def process_transaction(p: Portfolio, t: objects.Transaction) -> None:
             else:
                 amt = Web3.fromWei(t.value, 'ether')
             
+            eth = p.get_token_from_contract_address('ether')
+
             if t.is_incoming(p):
-                p.increment_balance('ether',amt)
+                eth.token_amount += amt
             else:
-                p.increment_balance('ether', amt+tx_fee, increase=False)
+                eth.token_amount -= amt
 
         elif t.tx_type == 'contract':
             print('check this out.')
+
 
 # Testing
 if __name__ == '__main__':
@@ -195,6 +234,8 @@ if __name__ == '__main__':
     p = Portfolio(address)
 
     tx = get_all_transactions(p)
-    
+
     for t in tx:
-        process_transaction(p,t)
+        process_transaction(p, t)
+    
+    p.print_token_balances()

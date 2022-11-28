@@ -93,6 +93,7 @@ def main():
     for tx in txs:
         if not tx[0]:  # no normal tx associated, smart contract call only AFAIK
             if tx[1]:  # only seen these associated with eth transfer from contract address
+                """Transfer of eth"""
                 tx_type = tx[1]['type']
                 contract_address = tx[1]['contract_address']
                 if tx[1]['is_error']:
@@ -101,7 +102,7 @@ def main():
                     amount = Web3.fromWei(tx[1]['value'], 'ether').real
                 txHash = tx[1]['hash']
 
-                if tx[1]['to'].lower() == p.address.lower():
+                """ if tx[1]['to'].lower() == p.address.lower():
                     p.buy('ETH', amount, txHash)
                     print("\t received", str(amount), 'ETH', 'from',
                           tx[1]['from'])
@@ -110,7 +111,7 @@ def main():
                     print("\t sent", str(amount), 'ETH', 'to', tx[1]['to'])
                 else:
                     print('\ttokens not sent to or from address being scanned')
-                    print('\t', i)
+                    print('\t', i) """
 
         elif not tx[1] and not tx[
                 2]:  # no internal smart contract txs, and not an erc20 tx, can also be an approve tx (how to handle??)
@@ -122,12 +123,12 @@ def main():
                                  'ether').real
             txHash = tx[0]['hash']
 
-            if tx[0]['to'].lower() == p.address.lower():
+            """ if tx[0]['to'].lower() == p.address.lower():
                 p.buy('ETH', amount, txHash)
                 print('received ' + str(amount) + ' Eth')
             elif tx[0]['from'].lower() == p.address.lower():
                 p.sell('ETH', amount, txHash, txFee=txFee)
-                print('sent ' + str(amount) + ' Eth')
+                print('sent ' + str(amount) + ' Eth') """
 
         elif not tx[
                 1]:  # not an internal smart contract tx, so far i've only seen this happen for buying shitcoins or contract calls

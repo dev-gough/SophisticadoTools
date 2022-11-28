@@ -11,10 +11,10 @@ class Token:
         self.decimals = args['decimals']
         self.name = args['name']
         self.symbol = args['symbol']
+        self.pair = args['pair']
 
         # portfolio stuff
         self.token_amount = 0
-        self.portfolio = args['portfolio']
         self.token_transaction_history = []
         
 
@@ -32,7 +32,7 @@ class Portfolio:
         self._all_transactions = self._pull_transactions()
 
         # add eth
-        self.add_token({"portfolio":self,"name": "Ether","pair": None,"contract_address": None, "decimals": 18, "symbol": "ETH"})
+        self.add_token({"name": "ether","pair": 'ether',"contract_address": 'ether', "decimals": 18, "symbol": "ETH"})
 
     def _pull_transactions(self):
         """This will call temp.py or whatever its called
@@ -45,37 +45,32 @@ class Portfolio:
         """
         Args needed for Token:
         ca
-        
         name
         symbol
         decimals
-        uni_v2_pair
+        pair
         """
         temp = Token(token_args)
         self.tokens.append(temp)
-
-    def increment_balance(self, token, amt, increase:bool=True):
-        """For when tokens get sent into an address"""
-
-        # find the token in the list within the portfolio
-
-        # should be a one element list, 
-        singular_token = [x for x in self.tokens if x.name.lower() == token.lower()]
-        
-        # TODO test this in a testing class eventually
-        if singular_token:
-            if len(singular_token) > 1:
-                print('bad')
-
-            t = singular_token[0]
-            
-            if increase:
-                t.token_amount += amt
-            else:
-                t.token_amount -= amt
+   
+    def holds_token(self, token_ca:str) -> bool:
+        if token_ca == 'ether':
+            return True
         else:
-            print(f'token: {token} is not recognized')
+            try:
+                return [x for x in self.tokens if x.contract_address.lower() == token_ca.lower()] != []
+            except:
+                return False
     
+    def get_token_from_contract_address(self, token_ca:str) -> Token:
+        if token_ca == 'ether':
+            return [x for x in self.tokens if x.name.lower() == 'ether'][0]
+        else:
+            return [x for x in self.tokens if x.contract_address.lower() == token_ca.lower()][0]
+
+    def print_token_balances(self) -> None:
+        for token in self.tokens:
+            print(f"{token.name}: {token.token_amount}")
 
 class PaperPortfolio(Portfolio):
 
