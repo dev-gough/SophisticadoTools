@@ -39,7 +39,6 @@ def objectify(transactions: list,
 
     return tx_objs
 
-
 def handle_multi_tx(
         transactions: list[objects.Transaction]) -> list[objects.Transaction]:
     """Replaces (hashes with multiple transactions) with one MultiTransaction object.
@@ -58,29 +57,25 @@ def handle_multi_tx(
     Returns:
         output_transactions (list[objects.Transaction]): The modified list of transactions.
     """
-    cache = []
     output_transactions = []
 
-    # zipper is the same list as transactions, just offset by one and None tacked onto the end.
-    zipper = transactions[1:]
+    # zippers are the same list as transactions, just offset by one/two.
+    zipper1 = transactions[1:]
+    zipper2 = transactions[2:]
 
     # needs one pass through the list, zip_longest is to have lookahead as well to try to find a third transaction.
-    for tx, lookahead in zip_longest(transactions, zipper):
-        if cache and cache == tx:  # == implemented by hash
+    for tx, lookahead1, lookahead2 in zip_longest(transactions, zipper1, zipper2):
+        if tx == lookahead1:  # == implemented by hash
 
             # create the temp MultiTransaction obj so we can point the right tx to it later.
             tmp = objects.MultiTransaction(tx.__dict__, True)
 
             # check ahead one element
-            try:
-                if lookahead is not None and lookahead == cache:
-                    # all 3 types are present.
-                    txs = [tx, cache, lookahead]
-                else:
-                    txs = [tx, cache]
-            except Exception as err:
-                print(err)
-
+            if lookahead1 == lookahead2:
+                txs = [tx,lookahead1,lookahead2]
+            else:
+                txs = [tx,lookahead1]
+            
             # iterate through all transactions found with the same hash, then set the pointers.
             for t in txs:
                 if t.tx_type == 'normal':
@@ -91,13 +86,8 @@ def handle_multi_tx(
                     tmp.set_contract_transaction(t)
 
             output_transactions.append(tmp)
-
-        # ensure we aren't adding a transaction back mistakenly
-        if lookahead is not None and lookahead != tx:
+        else:
             output_transactions.append(tx)
-
-        # set the cache
-        cache = tx
 
     output_transactions.sort()
     return output_transactions
