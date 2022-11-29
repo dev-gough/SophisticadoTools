@@ -3,6 +3,18 @@ import pandas as pd
 from dateutil.parser import parse
 from datetime import datetime
 import sys, getopt
+import os
+from dotenv import load_dotenv
+from web3 import Web3
+import etherscan
+
+load_dotenv()
+
+ES_ENDPOINT = os.getenv('ES_ENDPOINT')
+ES_API_KEY = os.getenv('ES_API_KEY')
+MAINNET_ENDPOINT = os.getenv('MAINNET_ENDPOINT')
+w3 = Web3(Web3.HTTPProvider(MAINNET_ENDPOINT))
+es = etherscan.Client(api_key=ES_API_KEY, cache_expire_after=5)
 
 
 class Token2:
@@ -114,9 +126,11 @@ with open(infile, 'w', encoding='utf8') as file:
 
 
 df = pd.read_csv(infile, header=0, encoding_errors='replace')
-parsed = df[['Timestamp', 'Transaction Type', 'Buy Amount', 'Buy Currency', 'Sell Amount', 'Sell Currency', 'Fee Amount', 'Fee Currency']]
+parsed = df[['Timestamp', 'Transaction Type', 'Buy Amount', 'Buy Currency', 'Sell Amount', 'Sell Currency', 'Fee Amount', 'Fee Currency', 'Tx Hash']]
 
-
+f=0  # flag to get from address on first iteration
+addr = ''  # wallet address
+normal_txs = []
 for i, r in parsed.iterrows():
     date = str(parse(r[0]))[:10]
     # date = parse(r[0])
@@ -127,6 +141,7 @@ for i, r in parsed.iterrows():
     sCurr = r[5]
     fAmount = r[6]
     fCurr = r[7]
+    txHash = r[8]
 
     # process tx data
     if txType == 'trade':
@@ -136,11 +151,22 @@ for i, r in parsed.iterrows():
         sAmount = str(sAmount).split('\r\n')
         sCurr = str(sCurr).split('\r\n')
 
+        if f==0:
+            addr = es.get_transaction_by_hash(txHash)['from']
+            normal_txs = es.get_transactions_by_address(addr)
+            f=1
+
         for i in range(len(bCurr)):
             # if bCurr[i] == 'PSYOP':
             #     print('breakpoint')
+            if sCurr[0] == 'ETH':
+                tx = next((sub for sub in normal_txs if sub['hash']==txHash), None)
+                sAmount[0] = w3.fromWei(tx['value'], 'ether')
             p.buy(bCurr[i], float(bAmount[i]), float(sAmount[i]) if i < len(sAmount) else 0, pCurr=sCurr[0], txFee=float(fAmount) if i==0 else 0, feeCurrency=fCurr, date=date)
         for i in range(len(sCurr)):
+            if sCurr[i] == 'ETH':
+                tx = next((sub for sub in normal_txs if sub['hash']==txHash), None)
+                sAmount[i] = w3.fromWei(tx['value'], 'ether')
             p.sell(sCurr[i], float(sAmount[i]), float(bAmount[i]) if i < len(bAmount) else 0, pCurr=bCurr[0], date=date)
 
 p_l_pertoken = []

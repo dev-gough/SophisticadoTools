@@ -351,3 +351,10 @@ class Client():
         self._params['boolean'] = 'True'
 
         return self.__proxy_req()
+
+    def get_transaction_by_hash(self, txHash):
+        """Get transaction by hash."""
+        self._params['action'] = 'eth_getTransactionByHash'
+        self._params['txhash'] = txHash
+
+        return self.__proxy_req()

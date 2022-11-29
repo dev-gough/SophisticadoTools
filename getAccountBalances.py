@@ -15,7 +15,7 @@ MAINNET_ENDPOINT = os.getenv('MAINNET_ENDPOINT')
 w3 = Web3(Web3.HTTPProvider(MAINNET_ENDPOINT))
 es = etherscan.Client(api_key=ES_API_KEY, cache_expire_after=5)
 
-ADDRESS = ''  # address to scan
+ADDRESS = '0x17a182f1bce80f26a0644b992e85bcd619cf3ab3'  # address to scan
 p = Portfolio(ADDRESS)  # portfolio obj tracking token balances
 
 def main():
