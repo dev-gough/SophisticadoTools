@@ -75,9 +75,15 @@ def handle_multi_tx(
     zipper1 = transactions[1:]
     zipper2 = transactions[2:]
 
+    cache = None
+
     # needs one pass through the list, zip_longest is to have lookahead as well to try to find a third transaction.
     for tx, lookahead1, lookahead2 in zip_longest(transactions, zipper1,
                                                   zipper2):
+
+        if tx.hash == cache:
+            continue
+
         if lookahead1 is not None and tx == lookahead1:  # == implemented by hash
 
             # create the temp MultiTransaction obj so we can point the right tx to it later.
@@ -99,8 +105,10 @@ def handle_multi_tx(
                     tmp.set_contract_transaction(t)
 
             output_transactions.append(tmp)
+            cache = tmp.hash
         else:
             output_transactions.append(tx)
+            cache = tx.hash
 
     output_transactions.sort()
     return output_transactions
@@ -157,8 +165,12 @@ def get_all_transactions(p: Portfolio,
 
     if sorted:
         normal_tx.sort()
-        normal_tx = handle_multi_tx(
-            normal_tx)  # handling multiple transactions requires a sorted list
+
+        # handling multiple transactions requires a sorted list
+        normal_tx = handle_multi_tx(normal_tx)
+
+        # TODO: Remove and put in proper place
+        p._all_transactions = normal_tx
 
     return normal_tx
 
@@ -192,6 +204,8 @@ def process_transaction(p: Portfolio, t: objects.Transaction) -> None:
             else:
                 token.token_amount -= token_amt
                 eth.token_amount += eth_value
+        else:
+            print('here')
     else:
         # handle the other 3 cases here
         if t.tx_type == 'normal':
